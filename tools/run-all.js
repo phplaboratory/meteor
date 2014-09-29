@@ -92,6 +92,7 @@ var Runner = function (appDir, options) {
     settingsFile: options.settingsFile,
     program: options.program,
     debugPort: options.debugPort,
+    shell: options.shell,
     proxy: self.proxy,
     onRunEnd: options.onRunEnd,
     watchForChanges: options.watchForChanges,

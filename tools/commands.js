@@ -160,6 +160,7 @@ var runCommandOptions = {
     'app-port': { type: String },
     'http-proxy-port': { type: String },
     'debug-port': { type: String },
+    shell: { type: Boolean },
     production: { type: Boolean },
     'raw-logs': { type: Boolean },
     settings: { type: String },
@@ -317,6 +318,7 @@ function doRunCommand (options) {
     appPort: appPort,
     appHost: appHost,
     debugPort: options['debug-port'],
+    shell: !!options.shell,
     settingsFile: options.settings,
     program: options.program || undefined,
     buildOptions: {
@@ -340,6 +342,18 @@ main.registerCommand(_.extend(
   runCommandOptions
 ), function (options) {
   options['debug-port'] = options['debug-port'] || '5858';
+  return doRunCommand(options);
+});
+
+///////////////////////////////////////////////////////////////////////////////
+// shell
+///////////////////////////////////////////////////////////////////////////////
+
+main.registerCommand(_.extend(
+  { name: 'shell' },
+  runCommandOptions
+), function (options) {
+  options.shell = true;
   return doRunCommand(options);
 });
 
@@ -1487,6 +1501,7 @@ var runTestAppForPackages = function (testPackages, testRunnerAppDir, options) {
       proxyPort: options.port,
       httpProxyPort: options.httpProxyPort,
       debugPort: options['debug-port'],
+      shell: options.shell,
       disableOplog: options['disable-oplog'],
       settingsFile: options.settings,
       banner: "Tests",

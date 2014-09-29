@@ -77,6 +77,21 @@ Options:
                  for incoming connections from debugging clients, such as
                  node-inspector (default 5858).
 
+>>> shell
+Launch a Node REPL for interactively evaluating server-side code.
+
+Usage: meteor shell [run options]
+       meteor run --shell [run options]
+
+TODONE Tab completion.
+
+TODO Make sure history works across sessions.
+
+TODO Make sure the shell can run alongside the server in separate
+     terminals.
+
+TODO Figure out what to do when both --shell and --debug-port are given.
+
 >>> create
 Create a new project.
 Usage: meteor create [--release <release>] <name>

@@ -64,6 +64,7 @@ var AppProcess = function (options) {
   self.program = options.program || null;
   self.nodeOptions = options.nodeOptions || [];
   self.debugPort = options.debugPort;
+  self.shell = options.shell;
   self.settings = options.settings;
 
   self.proc = null;
@@ -85,6 +86,12 @@ _.extend(AppProcess.prototype, {
       runLog.log("Program '" + self.program + "' not found.");
 
       self._maybeCallOnExit();
+      return;
+    }
+
+    if (self.shell) {
+      Console.enableProgressBar(false);
+      require('./server/shell.js').startParentSide(self.proc);
       return;
     }
 
@@ -204,12 +211,18 @@ _.extend(AppProcess.prototype, {
         require("./inspector.js").start(self.debugPort);
         opts.push("--debug-brk=" + self.debugPort);
       }
-      opts.push(path.join(self.bundlePath, 'main.js'));
 
-      opts.push(
-        '--parent-pid',
-        process.env.METEOR_BAD_PARENT_PID_FOR_TEST ? "foobar" : process.pid
-      );
+      opts.push(path.join(
+        self.bundlePath,
+        self.shell ? 'shell.js' : 'main.js'
+      ));
+
+      if (!self.shell) {
+        opts.push(
+          '--parent-pid',
+          process.env.METEOR_BAD_PARENT_PID_FOR_TEST ? "foobar" : process.pid
+        );
+      }
 
       return child_process.spawn(process.execPath, opts, {
         env: self._computeEnvironment()
@@ -332,6 +345,7 @@ var AppRunner = function (appDir, options) {
   self.settingsFile = options.settingsFile;
   self.program = options.program;
   self.debugPort = options.debugPort;
+  self.shell = options.shell;
   self.proxy = options.proxy;
   self.watchForChanges =
     options.watchForChanges === undefined ? true : options.watchForChanges;
@@ -563,6 +577,7 @@ _.extend(AppRunner.prototype, {
       },
       program: self.program,
       debugPort: self.debugPort,
+      shell: self.shell,
       onListen: function () {
         self.proxy.setMode("proxy");
         options.onListen && options.onListen();
