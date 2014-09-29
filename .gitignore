@@ -17,3 +17,4 @@ TAGS
 *.out
 npm-debug.log
 universe
+.arcconfig
