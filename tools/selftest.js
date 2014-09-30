@@ -832,12 +832,13 @@ _.extend(PhantomClient.prototype, {
     var self = this;
 
     var phantomScript = "require('webpage').create().open('" + self.url + "');";
-    var phantomPath = phantomjs.path;
-    self.process = child_process.execFile(
-      '/bin/bash',
-      ['-c',
-       ("exec " + phantomPath + " --load-images=no /dev/stdin <<'END'\n" +
-        phantomScript + "\nEND\n")]);
+
+    // We need to 'cat | ' to sanitize stdin: https://groups.google.com/forum/#!msg/nodejs/SxNKLclbM5k/IrgMQ3UDIQAJ
+    var command = 'cat | ' + phantomjs.path + ' --load-images=no /dev/stdin';
+    self.process = new SimpleProcess('/bin/bash', ['-c', command ]);
+    self.process.start();
+    self.process.stdin.write(phantomScript + "\n");
+    self.process.stdin.end();
   },
 
   stop: function() {
