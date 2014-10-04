@@ -18,6 +18,7 @@ var webdriver = require('browserstack-webdriver');
 var phantomjs = require('phantomjs');
 var catalogRemote = require('./catalog-remote.js');
 var Package = uniload.load({ packages: ["ejson"] });
+var processes = require('./processes.js');
 
 var toolPackageName = "meteor-tool";
 
@@ -816,6 +817,61 @@ var Client = function (options) {
   }
 };
 
+var MeteorTempDir = function () {
+  var self = this;
+  self._tmp = self._getSystemTemp();
+  self.path = path.join(self._tmp, "meteor");
+  files.mkdir_p(self.path);
+};
+
+_.extend(MeteorTempDir.prototype, {
+  _getSystemTemp: function () {
+    var tmpDir = _.first(_.map(['TMPDIR', 'TMP', 'TEMP'], function (t) {
+        return process.env[t];
+      }).filter(_.identity)) || path.sep + 'tmp';
+    tmpDir = fs.realpathSync(tmpDir);
+    return tmpDir;
+  }
+});
+
+MeteorTempDir = new MeteorTempDir();
+
+var TempFile = function () {
+  var self = this;
+  self.path = self.create();
+};
+
+_.extend(TempFile.prototype, {
+  create: function (prefix) {
+    var self = this;
+
+    prefix = prefix || 'tmp-';
+
+    // create the file; retry in case of collisions
+    var tries = 3;
+    while (tries > 0) {
+      var filePath = path.join(MeteorTempDir.path, prefix + (Math.random() * 0x100000000 + 1).toString(36));
+      try {
+        var f = fs.openSync(filePath, 'w+');
+        f.close();
+        self.path = filePath;
+        return self.path;
+      } catch (err) {
+        tries--;
+      }
+    }
+    throw new Error("failed to make temporary file in " + MeteorTempDir.path);
+  },
+
+  unlink: function () {
+    var self = this;
+    if (self.path) {
+      fs.unlinkSync(self.path);
+      self.path = null;
+    }
+  }
+});
+
 // PhantomClient
 var PhantomClient = function (options) {
   var self = this;
@@ -823,6 +879,8 @@ var PhantomClient = function (options) {
 
   self.name = "phantomjs";
   self.process = null;
+
+  self.scriptFile = null;
 };
 
 util.inherits(PhantomClient, Client);
@@ -832,19 +890,20 @@ _.extend(PhantomClient.prototype, {
     var self = this;
 
     var phantomScript = "require('webpage').create().open('" + self.url + "');";
+    self.scriptFile = new TempFile();
 
-    // We need to 'cat | ' to sanitize stdin: https://groups.google.com/forum/#!msg/nodejs/SxNKLclbM5k/IrgMQ3UDIQAJ
-    var command = 'cat | ' + phantomjs.path + ' --load-images=no /dev/stdin';
-    self.process = new SimpleProcess('/bin/bash', ['-c', command ]);
+    fs.writeFileSync(self.scriptFile.path, phantomScript);
+
+    self.process = new processes.RunCommand(phantomjs.path, ['--load-images=no', self.scriptFile.path]);
     self.process.start();
-    self.process.stdin.write(phantomScript + "\n");
-    self.process.stdin.end();
   },
 
   stop: function() {
     var self = this;
     self.process && self.process.kill();
     self.process = null;
+    self.scriptFile && self.scriptFile.unlink();
+    self.scriptFile = null;
   }
 });
 
