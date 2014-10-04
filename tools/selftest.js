@@ -18,6 +18,7 @@ var webdriver = require('browserstack-webdriver');
 var phantomjs = require('phantomjs');
 var catalogRemote = require('./catalog-remote.js');
 var Package = uniload.load({ packages: ["ejson"] });
+var Console = require('./console.js').Console;
 var processes = require('./processes.js');
 
 var toolPackageName = "meteor-tool";
@@ -857,6 +858,7 @@ _.extend(TempFile.prototype, {
         self.path = filePath;
         return self.path;
       } catch (err) {
+        Console.debug("Error creating temp file", filePath, err);
         tries--;
       }
     }
