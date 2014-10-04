@@ -853,8 +853,8 @@ _.extend(TempFile.prototype, {
     while (tries > 0) {
       var filePath = path.join(MeteorTempDir.path, prefix + (Math.random() * 0x100000000 + 1).toString(36));
       try {
-        var f = fs.openSync(filePath, 'w+');
-        f.close();
+        var fd = fs.openSync(filePath, 'w+');
+        fs.closeSync(fd);
         self.path = filePath;
         return self.path;
       } catch (err) {
