@@ -846,7 +846,9 @@ _.extend(TempFile.prototype, {
   create: function (prefix) {
     var self = this;
 
-    prefix = prefix || 'tmp-';
+    prefix = prefix || 'tmp';
+    // So we can safely clean-up old files in future
+    prefix = '.' + process.pid + '.';
 
     // create the file; retry in case of collisions
     var tries = 3;
