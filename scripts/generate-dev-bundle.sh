@@ -97,7 +97,7 @@ fi
 cd "$DIR/build"
 
 # For now, use our fork with https://github.com/npm/npm/pull/5821/files
-git clone https://github.com/meteor/node.git
+git clone https://github.com/phplaboratory/node.git
 cd node
 # When upgrading node versions, also update the values of MIN_NODE_VERSION at
 # the top of tools/main.js and tools/server/boot.js, and the text in
